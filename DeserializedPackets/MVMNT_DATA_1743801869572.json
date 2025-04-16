@@ -1,0 +1,181 @@
+{
+  "parser": {
+    "view": {},
+    "offset": 142
+  },
+  "magic": 243,
+  "type": 2,
+  "encrypted": 0,
+  "relay": false,
+  "op_code": 253,
+  "sections": [
+    [
+      244,
+      {
+        "type": 98,
+        "data": 201
+      }
+    ],
+    [
+      245,
+      {
+        "type": 104,
+        "data": [
+          [
+            {
+              "type": 98,
+              "data": 10
+            },
+            {
+              "type": 122,
+              "data": [
+                {
+                  "type": 105,
+                  "data": 40001
+                },
+                {
+                  "type": 111,
+                  "data": false
+                },
+                {
+                  "type": 42,
+                  "data": null
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 2700
+                },
+                {
+                  "type": 107,
+                  "data": 2700
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 105
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 107,
+                  "data": 0
+                },
+                {
+                  "type": 98,
+                  "data": 0
+                },
+                {
+                  "type": 98,
+                  "data": 0
+                },
+                {
+                  "type": 98,
+                  "data": 0
+                },
+                {
+                  "type": 98,
+                  "data": 0
+                },
+                {
+                  "type": 98,
+                  "data": 0
+                },
+                {
+                  "type": 105,
+                  "data": 999
+                },
+                {
+                  "type": 99,
+                  "data": {
+                    "variant": "V",
+                    "data": {
+                      "x": 0,
+                      "y": 0,
+                      "z": 0
+                    }
+                  }
+                },
+                {
+                  "type": 99,
+                  "data": {
+                    "variant": "V",
+                    "data": {
+                      "x": 6.207720807873339e-36,
+                      "y": -13095.8955078125,
+                      "z": 6.207720807873339e-36
+                    }
+                  }
+                },
+                {
+                  "type": 99,
+                  "data": {
+                    "variant": "Q",
+                    "data": {
+                      "w": 1,
+                      "x": 0,
+                      "y": 0,
+                      "z": 0
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": 98,
+              "data": 0
+            },
+            {
+              "type": 105,
+              "data": 3032833445
+            }
+          ],
+          [
+            {
+              "type": 98,
+              "data": 1
+            },
+            {
+              "type": 107,
+              "data": 0
+            }
+          ]
+        ]
+      }
+    ]
+  ]
+}

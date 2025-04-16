@@ -1,0 +1,1 @@
+npx electron-packager . "BLF MultiTool By Snoofz" -platform=win32 --arch=x64 --icon=assets/icon.ico --out=builds --overwrite

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Bullet Force</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100vh;
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-size: 14px;
+      color: #f0f0f0;
+    }
+
+    .game-container {
+      width: 98%;
+      max-width: 1920px;
+      height: 96%;
+      display: flex;
+      flex-direction: column;
+      background: rgba(35, 35, 40, 0.97);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(70, 70, 80, 0.5);
+    }
+
+    .title-bar {
+      height: 38px;
+      background: linear-gradient(to right, #1a1a1d, #27272c);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid rgba(80, 80, 95, 0.3);
+    }
+
+    .title-text {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+
+    .window-controls button {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .window-controls button:hover::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
+    }
+
+    .minimize { 
+      background: #fdbc40; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+    }
+    .minimize:hover::after {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 1px;
+      height: 1px !important;
+      width: 6px !important;
+    }
+
+    .maximize { 
+      background: #34c749; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+    }
+    .maximize:hover::after {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 1px;
+      height: 6px !important;
+      width: 6px !important;
+    }
+
+    .close { 
+      background: #fc6058; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+    }
+    .close:hover::after {
+      content: '×';
+      background: none;
+      color: rgba(0, 0, 0, 0.5);
+      font-size: 12px;
+      line-height: 0;
+      width: auto !important;
+      height: auto !important;
+    }
+
+    #progress-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 600px;
+      text-align: center;
+      z-index: 1;
+    }
+
+    h3 {
+      color: #ff4c4c;
+      margin-bottom: 10px;
+    }
+
+    #progress-bar {
+      width: 100%;
+      height: 20px;
+      background-color: #2a2a2a;
+      border-radius: 10px;
+      border: 1px solid #ff4c4c;
+      overflow: hidden;
+    }
+
+    #progress-bar span {
+      display: block;
+      height: 100%;
+      background-color: #ff4c4c;
+      width: 0%;
+      border-radius: 10px;
+      transition: width 0.3s;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: transparent;
+      flex: 1;
+    }
+    
+    /* Toast styling */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 1000;
+    }
+    
+    .toast {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 4px;
+      margin-top: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-width: 250px;
+      max-width: 350px;
+      animation: slideIn 0.3s, fadeOut 0.5s 2.5s forwards;
+      font-size: 14px;
+    }
+    
+    .toast .close-toast {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 16px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="title-bar">
+      <div class="title-text">
+        Bullet Force
+      </div>
+      <div class="window-controls">
+        <button class="minimize" onclick="windowControls.minimize()"></button>
+        <button class="maximize" onclick="windowControls.maximize()"></button>
+        <button class="close" onclick="windowControls.close()"></button>
+      </div>
+    </div>
+
+    <div id="progress-container">
+      <h3>Loading Bullet Force...</h3>
+      <div id="progress-bar"><span id="progress-fill"></span></div>
+    </div>
+
+    <canvas id="unity-canvas"></canvas>
+  </div>
+  
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="./game.js"></script>
+  <script src="bf-build/game.loader.js"></script>
+
+  <script>
+    let isInFullscreen = false;
+    const { ipcRenderer } = require('electron');
+
+    function updatePlayerList() {
+        ipcRenderer.send('player-list-update', window.actorIds);
+    }
+
+    function showToast(message, duration = 3000) {
+      const toastContainer = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      
+      const messageSpan = document.createElement('span');
+      messageSpan.textContent = message;
+      
+      const closeButton = document.createElement('button');
+      closeButton.className = 'close-toast';
+      closeButton.innerHTML = '&times;';
+      closeButton.addEventListener('click', () => {
+        toast.style.animation = 'fadeOut 0.3s forwards';
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      });
+      
+      toast.appendChild(messageSpan);
+      toast.appendChild(closeButton);
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, duration + 500);
+      
+      return toast;
+    }
+    
+    function toggleFullscreen() {
+      isInFullscreen = !isInFullscreen;
+      if (window.criticalInstance) {
+        window.criticalInstance.SetFullscreen(isInFullscreen);
+      }
+    }
+    
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+    
+    let fullscreenToastShown = false;
+    let instanceToastShown = false;
+    window.devCreateMultipleInstances = false;
+
+    async function init() {
+      if (!instanceToastShown) {
+        instanceToastShown = true;
+        showToast("Verified Bullet Force instance: Running directly from official Unity build files.", 10000);
+        if (window.devCreateMultipleInstances) {
+          for (var i = 0; i < 2; i++) {
+            await createUnityInstance(document.getElementById("unity-canvas"), {
+              dataUrl: "bf-build/game.data.gz",
+              frameworkUrl: "bf-build/game.framework.js.gz",
+              codeUrl: "bf-build/game.wasm.gz",
+              companyName: "CrazyGames",
+              productName: "bullet-force-multiplayer",
+              productVersion: "1.0",
+              showBanner: false
+            });
+          }
+        }
+
+        window.criticalInstance = await createUnityInstance(document.getElementById("unity-canvas"), {
+          dataUrl: "bf-build/game.data.gz",
+          frameworkUrl: "bf-build/game.framework.js.gz",
+          codeUrl: "bf-build/game.wasm.gz",
+          companyName: "CrazyGames",
+          productName: "bullet-force-multiplayer",
+          productVersion: "1.0",
+          showBanner: false
+        }, (progress) => {
+          const progressFill = document.getElementById("progress-fill");
+          progressFill.style.width = (progress * 100) + "%";
+
+          if (progress >= 1.0 && !fullscreenToastShown) {
+            fullscreenToastShown = true;
+            setTimeout(() => {
+              const container = document.getElementById("progress-container");
+              if (container) container.style.display = "none";
+              
+              showToast("To go fullscreen, press CTRL + F", 10000);
+
+              const OriginalWebSocket = window.WebSocket;
+
+              window.WebSocket = function(url, protocols) {
+                  const socket = new OriginalWebSocket(url, protocols);
+                  
+                  const originalSend = socket.send;
+                  
+                  socket.send = function(...args) {
+                      originalSend.apply(this, args);
+                  }
+                
+                  socket.addEventListener("message", (e) => {
+                      const uint8Array = new Uint8Array(e.data);
+                      let binaryString = String.fromCharCode.apply(null, uint8Array);
+
+                      if (binaryString.length === 146) {
+                          updatePlayerList();
+
+                          const packet = new PhotonPacket(uint8Array.buffer);
+                          const hashtable = packet.sections[0][1].data;
+
+                          const hashtableEntry = [...hashtable.entries()].find(([key]) => key.data === 10);
+
+                          if (hashtableEntry) {
+                              const hashtableArray = hashtableEntry[1].data;
+
+                              const viewId = hashtableArray[0]?.data;
+                              const vector3Entry = hashtableArray[23]?.data;
+                              const vector3 = vector3Entry?.data;
+
+                              const worldVectorEntry = hashtableArray[22]?.data;
+                              const worldVector = worldVectorEntry?.data;
+
+                              const yawEntry = hashtableArray[5];
+                              const playerYaw = yawEntry?.data;
+
+                              console.log(hashtableEntry)
+                              
+                              const pitchEntry = hashtableArray[4];
+                              const playerPitch = pitchEntry?.data || 0;
+
+                              if (!window.actorIds) {
+                                  window.actorIds = [];
+                              }
+
+                              let actor = window.actorIds.find(actor => actor.viewId === viewId);
+
+                              if (!actor) {
+                                  actor = { 
+                                      viewId, 
+                                      vector3, 
+                                      worldVector, 
+                                      playerYaw, 
+                                      playerPitch,
+                                      actorId: viewId.toString().replace(/(001|002|003|004|005|006|007|008|009)$/, "")
+                                  };
+                                  window.actorIds.push(actor);
+                                  updatePlayerList();
+                              } else {
+                                  actor.vector3 = vector3;
+                                  actor.playerYaw = playerYaw;
+                                  actor.playerPitch = playerPitch || actor.playerPitch;
+                                  updatePlayerList();
+                              }
+
+                              window.lastYaw = playerYaw;
+                          }
+                      }
+                  });
+                  return socket;
+              };
+            }, 5);
+          }
+        });
+      }
+    }
+
+    init();
+
+    // Helper function to call Unity methods
+    function callUnityFunction(functionName, arg1, arg2) {
+      if (window.criticalInstance) {
+        // Pass arguments as needed by the Unity function
+        if (arg2 !== undefined) {
+          window.criticalInstance.SendMessage("PlayerBody(Clone)", functionName, [arg1, arg2]);
+        } else if (arg1 !== undefined) {
+          window.criticalInstance.SendMessage("PlayerBody(Clone)", functionName, arg1);
+        } else {
+          window.criticalInstance.SendMessage("PlayerBody(Clone)", functionName);
+        }
+      } else {
+        console.error("Unity instance not loaded yet");
+      }
+    }
+  </script>
+  </body>
+</html>

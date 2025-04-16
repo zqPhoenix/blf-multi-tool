@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;">
+    <title>BFHacks Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --main-bg: rgba(35, 35, 40, 0.97);
+            --sidebar-bg: rgba(28, 28, 33, 0.98);
+            --highlight-color: #3498db;
+            --border-color: rgba(70, 70, 80, 0.5);
+            --text-color: #f0f0f0;
+            --tab-hover: rgba(60, 60, 70, 0.7);
+            --panel-bg: rgba(40, 40, 45, 0.97);
+            --mono-font: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .window-panel {
+            width: 98%;
+            max-width: 1920px;
+            height: 96%;
+            display: flex;
+            flex-direction: column;
+            background: var(--main-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        .title-bar {
+            height: 38px;
+            background: rgba(25, 25, 30, 0.97);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            -webkit-app-region: drag;
+            border-bottom: 1px solid rgba(80, 80, 95, 0.3);
+        }
+
+        .title-text {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .file-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .file-list li {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(80, 80, 95, 0.2);
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .file-list li:hover {
+            background: rgba(60, 60, 70, 0.4);
+        }
+        
+        .file-list li i {
+            margin-right: 8px;
+            color: var(--highlight-color);
+            opacity: 0.8;
+        }
+        
+        /* Make sure the scrollbox has proper dimensions */
+        #photonFileContainer {
+            height: 200px;
+            margin-bottom: 15px;
+        }
+        
+        .title-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 8px;
+            background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB0UlEQVR4nO3avUoDQRSG4SNiJansRCxEBDXeQYjYWwo2FlqoF5BCu6QMaJXGXlAQvAMRVEhnaxXwBrQRVPCHvDIkwSRmf2K2mTPnqXTZwu/MNzsxiYgxxigGFIAroCohAYrAHb0qoh0wDZwCTf66Ea2AcaAEvBJtTTQC5oBb4tVFI2AfeE8I77ZDUTQBcsAZ6ZyLwso/pAz/BsyKsuPtifRKogWwDXwMEb7uTgfRADiIONvjqr8gWtAawDB2RRvSD+FCNAAq/a/f29fiuNMhJ76jN2g1ZROegXnxHYNXOWkInipe6xNf8ajt4E6HHfEZsATUEvZ31BAOxeN3a46BRorgkUPwEslP8yTVkMM7ZfERFn5ktvKh1r4mAYd3FiXg8A0JOLxzJAGHdwoScPiy+AILnylbeS9gtc+U1d4LWO0zZbX3Alb7TFntvQHsDfmlBDUrv9z18+qQX0vx+8MMWg+8b2Cr69oMcB/Cyle6/vD+IUwCl5rD54GvvgDu982ue8baQ2qqqn0HsDFgCD1NaN+3DryoWPkRhrACPKoK/48hTAHXqsJ3uL2f9Exo3zcBnHi557NqgmrYECRuO+Ql4CaUJTT8DiG88IP+UTLGiM9+AOT65z6HUHIXAAAAAElFTkSuQmCC);
+            border-radius: 4px;
+            background-size: cover;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+            -webkit-app-region: no-drag;
+        }
+
+        .window-controls button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .window-controls button:hover::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 6px;
+            height: 6px;
+        }
+
+        .minimize { 
+            background: #fdbc40; 
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+        }
+        .minimize:hover::after {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 1px;
+            height: 1px !important;
+            width: 6px !important;
+        }
+
+        .maximize { 
+            background: #34c749; 
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+        }
+        .maximize:hover::after {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 1px;
+            height: 6px !important;
+            width: 6px !important;
+        }
+
+        .close { 
+            background: #fc6058; 
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1) inset;
+        }
+        .close:hover::after {
+            content: '×';
+            background: none;
+            color: rgba(0, 0, 0, 0.5);
+            font-size: 12px;
+            line-height: 0;
+            width: auto !important;
+            height: auto !important;
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100% - 38px);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(80, 80, 95, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .sidebar-tabs {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-top: 8px;
+        }
+
+        .tab {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: var(--text-color);
+            opacity: 0.7;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .tab:hover {
+            background: var(--tab-hover);
+            opacity: 0.85;
+        }
+
+        .tab.active {
+            background: rgba(52, 152, 219, 0.2);
+            border-left: 3px solid var(--highlight-color);
+            opacity: 1;
+        }
+
+        .tab i {
+            margin-right: 12px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .content-area {
+            flex-grow: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transform: translateX(20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid rgba(80, 80, 95, 0.2);
+            overflow: hidden;
+        }
+
+        .panel h3 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .panel h3 i {
+            margin-right: 8px;
+            opacity: 0.8;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            background: rgba(20, 20, 25, 0.6);
+            border: 1px solid rgba(80, 80, 95, 0.3);
+            padding: 10px 12px;
+            border-radius: 4px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            border-color: var(--highlight-color);
+        }
+
+        button {
+            background: var(--highlight-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s ease;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        select {
+            width: 100%;
+            height: 120px;
+            background: rgba(20, 20, 25, 0.6);
+            border: 1px solid rgba(80, 80, 95, 0.3);
+            padding: 8px;
+            border-radius: 4px;
+            color: var(--text-color);
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        .scrollabletextbox {
+            height: 150px;
+            overflow-y: auto;
+            background: rgba(20, 20, 25, 0.6);
+            border: 1px solid rgba(80, 80, 95, 0.3);
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        input[type="checkbox"] {
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
+        label {
+            vertical-align: middle;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 30, 35, 0.6);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 100, 120, 0.5);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(120, 120, 140, 0.7);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .context-menu {
+            display: none;
+            position: absolute;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .context-menu ul {
+            list-style: none;
+        }
+
+        .context-menu li {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .context-menu li:hover {
+            background: var(--tab-hover);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-on {
+            background: #34c749;
+            box-shadow: 0 0 5px #34c749;
+        }
+
+        .status-off {
+            background: #fc6058;
+            box-shadow: 0 0 5px #fc6058;
+        }
+
+        .panel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .tool-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(45, 45, 50, 0.5);
+            border-radius: 6px;
+            border: 1px solid rgba(80, 80, 95, 0.2);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tool-item:hover {
+            background: rgba(55, 55, 60, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .tool-item i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--highlight-color);
+        }
+
+        .separator {
+            height: 1px;
+            background: rgba(80, 80, 95, 0.2);
+            margin: 15px 0;
+        }
+
+        #consoleLog, #lobbyChatLog, #requestList, #playerList {
+            font-family: var(--mono-font);
+        }
+        
+        /* Player list styles */
+        .player-container {
+            height: 240px;
+            background: rgba(20, 20, 25, 0.6);
+            border: 1px solid rgba(80, 80, 95, 0.3);
+            border-radius: 4px;
+            overflow: auto;
+        }
+        
+        .player-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .player-list th {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid rgba(80, 80, 95, 0.5);
+            position: sticky;
+            top: 0;
+            background: rgba(30, 30, 35, 0.9);
+            z-index: 1;
+        }
+        
+        .player-list td {
+            padding: 8px;
+            border-bottom: 1px solid rgba(80, 80, 95, 0.2);
+        }
+        
+        .player-list tr:hover {
+            background: rgba(60, 60, 70, 0.4);
+        }
+        
+        .player-list .position {
+            font-size: 12px;
+        }
+        
+        .active-player {
+            background: rgba(52, 152, 219, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="window-panel">
+        <div class="title-bar">
+            <div class="title-text">
+                <div class="title-icon"></div>
+                BFHacks Panel
+            </div>
+            <div class="window-controls">
+                <button class="minimize" onclick="windowControls?.minimize?.()"></button>
+                <button class="maximize" onclick="windowControls?.maximize?.()"></button>
+                <button class="close" onclick="windowControls?.close?.()"></button>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <!-- Sidebar with tabs -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-title">Navigation</div>
+                </div>
+                <div class="sidebar-tabs">
+                    <div class="tab active" data-tab="photon">
+                        <i class="fas fa-network-wired"></i> Photon
+                    </div>
+                    <div class="tab" data-tab="account">
+                        <i class="fas fa-user-circle"></i> Account
+                    </div>
+                    <div class="tab" data-tab="hacks">
+                        <i class="fas fa-code"></i> Hacks
+                    </div>
+                    <div class="tab" data-tab="mitm">
+                        <i class="fas fa-exchange-alt"></i> MITM
+                    </div>
+                    <div class="tab" data-tab="tools">
+                        <i class="fas fa-tools"></i> Tools
+                    </div>
+                </div>
+            </div>
+
+            <!-- Content area -->
+            <div class="content-area">
+                <!-- Photon tab content -->
+                <div class="tab-content active" id="photon-content">
+                    <div class="panel">
+                        <h3><i class="fas fa-terminal"></i> Console Log</h3>
+                        <div id="consoleLog" class="scrollabletextbox">
+                            <p>Console initialized. Ready to receive logs...</p>
+                        </div>
+                    </div>
+
+                    <div class="panel-grid">
+                        <div class="panel">
+                            <h3><i class="fas fa-file-import"></i> Photon Base64 Input</h3>
+                            <input type="text" placeholder="Enter Photon Base64 Data" id="photonBase64" />
+                            <button id="processPhoton"><i class="fas fa-play"></i> Process</button>
+                        </div>
+
+                        <div class="panel">
+                            <h3><i class="fas fa-history"></i> Sent Requests</h3>
+                            <select id="requestList" size="5"></select>
+                        </div>
+                    </div>
+
+                    <!-- New Player Tracking Panel -->
+                    <div class="panel">
+                        <h3><i class="fas fa-users"></i> Player Tracking</h3>
+                        <div class="player-container">
+                            <table class="player-list" id="playerList">
+                                <thead>
+                                    <tr>
+                                        <th>ActorId</th>
+                                        <th>ViewId</th>
+                                        <th>Position</th>
+                                        <th>Yaw</th>
+                                        <th>Pitch</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="playerListBody">
+                                    <!-- Player data will be populated here dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="separator"></div>
+                        <div class="flex-row">
+                            <input type="checkbox" id="trackAllPlayers" checked />
+                            <label for="trackAllPlayers">Track All Players</label>
+                        </div>
+                        <div class="flex-row">
+                            <input type="checkbox" id="highlightLocalPlayer" checked />
+                            <label for="highlightLocalPlayer">Highlight Local Player</label>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3><i class="fas fa-file-code"></i> Decoded Photon Files</h3>
+                        <div class="scrollabletextbox" id="photonFileContainer">
+                            <ul id="photonFileList" class="file-list">
+                                <!-- Files will be dynamically added here -->
+                            </ul>
+                        </div>
+                        <div class="separator"></div>
+                        <div class="flex-row">
+                            <input type="checkbox" id="saveMovementPackets" />
+                            <label for="saveMovementPackets">Save Movement Packets</label>
+                        </div>
+                        <div class="flex-row">
+                            <input type="checkbox" id="savePlayerDataPackets" />
+                            <label for="savePlayerDataPackets">Save Player Data Packets</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account tab content -->
+                <div class="tab-content" id="account-content">
+                    <div class="panel-grid">
+                        <div class="panel">
+                            <h3><i class="fas fa-user-plus"></i> Account Generator</h3>
+                            <input type="text" placeholder="Username" id="username" />
+                            <input type="password" placeholder="Password" id="password" />
+                            <button id="generateAccount"><i class="fas fa-plus-circle"></i> Generate Account</button>
+                        </div>
+
+                        <div class="panel">
+                            <h3><i class="fas fa-users"></i> Generated Accounts</h3>
+                            <select id="accountList" size="10"></select>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3><i class="fas fa-sliders-h"></i> Account Modifiers</h3>
+                        <div class="panel-grid">
+                            <div>
+                                <input type="text" placeholder="Modifier Key" id="modifierKey" />
+                                <input type="text" placeholder="Modifier Value" id="modifierValue" />
+                                <button id="applyModifier"><i class="fas fa-check"></i> Apply Modifier</button>
+                            </div>
+                            <div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="unlockAll" />
+                                    <label for="unlockAll">Unlock All</label>
+                                </div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="devSpoof" />
+                                    <label for="devSpoof">Dev Spoof</label>
+                                </div>
+                                <div class="separator"></div>
+                                <label for="rankSlider">Rank: <span id="rankValue">1</span></label>
+                                <input type="range" id="rankSlider" min="1" max="200" value="1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hacks tab content -->
+                <div class="tab-content" id="hacks-content">
+                    <div class="panel">
+                        <h3><i class="fas fa-gamepad"></i> Game Hacks</h3>
+                        <div class="panel-grid">
+                            <div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="spinBot" />
+                                    <label for="spinBot">Spin Bot</label>
+                                </div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="pingSpoof" />
+                                    <label for="pingSpoof">Ping Spoof</label>
+                                </div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="slide" />
+                                    <label for="slide">Slide</label>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="rank232Spoof" />
+                                    <label for="rank232Spoof">Rank 232 Spoof</label>
+                                </div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="rank0Spoof" />
+                                    <label for="rank0Spoof">Rank 0 Spoof</label>
+                                </div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="rank255Spoof" />
+                                    <label for="rank255Spoof">Rank 255 Spoof</label>
+                                </div>
+                                <div class="flex-row">
+                                    <input type="checkbox" id="rank222Spoof" />
+                                    <label for="rank222Spoof">Rank 222 Spoof</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="separator"></div>
+                        <input type="text" id="clanTag" placeholder="Clan Tag" />
+                    </div>
+
+                    <div class="panel">
+                        <h3><i class="fas fa-comment-alt"></i> Chat Messages</h3>
+                        <input type="text" placeholder="Send Message" id="sendChatMessage" />
+                        <button id="sendMessage"><i class="fas fa-paper-plane"></i> Send</button>
+                        <div class="separator"></div>
+                        <h3><i class="fas fa-comments"></i> Lobby Chat</h3>
+                        <div id="lobbyChatLog" class="scrollabletextbox"></div>
+                    </div>
+                </div>
+
+                <!-- MITM tab content -->
+                <div class="tab-content" id="mitm-content">
+                    <div class="panel">
+                        <h3><i class="fas fa-exchange-alt"></i> MITM Control</h3>
+                        <div class="flex-row">
+                            <span class="status-indicator status-off"></span>
+                            <h4 id="connectionStatus">Not Connected</h4>
+                        </div>
+                        <div class="separator"></div>
+                        <div class="flex-row">
+                            <button id="startServer"><i class="fas fa-play"></i> Start Server</button>
+                            <button id="stopServer"><i class="fas fa-stop"></i> Stop Server</button>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3><i class="fas fa-cogs"></i> Advanced Configuration</h3>
+                        <p>Configure advanced MITM settings and traffic inspection rules.</p>
+                        <div class="tool-grid">
+                            <div class="tool-item">
+                                <i class="fas fa-filter"></i>
+                                <div>Packet Filters</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-edit"></i>
+                                <div>Edit Rules</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-save"></i>
+                                <div>Save Config</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-folder-open"></i>
+                                <div>Load Config</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tools tab content -->
+                <div class="tab-content" id="tools-content">
+                    <div class="panel">
+                        <h3><i class="fas fa-toolbox"></i> Utility Tools</h3>
+                        <div class="tool-grid">
+                            <div class="tool-item">
+                                <i class="fas fa-key"></i>
+                                <div>Key Generator</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-bug"></i>
+                                <div>Debug Mode</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-file-export"></i>
+                                <div>Export Data</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-file-import"></i>
+                                <div>Import Data</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-broom"></i>
+                                <div>Clean Cache</div>
+                            </div>
+                            <div class="tool-item">
+                                <i class="fas fa-chart-line"></i>
+                                <div>Stats</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3><i class="fas fa-info-circle"></i> Future Features</h3>
+                        <p>More tools and utilities coming soon!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="contextMenu" class="context-menu">
+        <ul>
+            <li id="deleteFile">Delete</li>
+            <li id="openFileLocation">Open File Location</li>
+            <li id="editFile">Edit</li>
+        </ul>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./renderer.js"></script>

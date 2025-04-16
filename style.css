@@ -1,0 +1,314 @@
+/* Body and general styling */
+body, html {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    background-color: transparent; /* Twitter dark background */
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+#toolContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+
+h3 {
+    margin-top: 0;
+    color: #1da1f2; /* Twitter blue */
+}
+
+/* Scrollable textboxes */
+.scrollabletextbox {
+    height: 180px;
+    overflow-y: auto;
+    background-color: #192734; /* Darker Twitter gray */
+    color: #ffffff;
+    border: 1px solid #38444d; /* Twitter border gray */
+    border-radius: 8px;
+    padding: 10px;
+}
+
+/* Input Fields */
+input[type="text"], 
+input[type="password"], 
+select {
+    width: 92%;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #38444d;
+    background-color: #192734;
+    color: #ffffff;
+}
+
+/* Button Styling */
+button {
+    background-color: #1da1f2; /* Twitter blue */
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+button:hover {
+    background-color: #1a91da; /* Darker Twitter blue */
+}
+
+/* Section Containers */
+#accountGen, #chatMessage, #requests, #photonInput, #generatedAccounts, 
+#decodedPhotonFiles, #lobbyChat, #mitmBox, #accountModifiers, 
+#futureFeature1, #futureFeature2 {
+    background-color: #192734;
+    padding: 20px;
+    border: 1px solid #38444d;
+    border-radius: 10px;
+}
+
+/* Fix select height */
+select {
+    height: 150px;
+}
+
+/* Custom scrollbar styling */
+.scrollabletextbox::-webkit-scrollbar, 
+#requestList::-webkit-scrollbar, 
+#accountList::-webkit-scrollbar, 
+#photonFileList::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollabletextbox::-webkit-scrollbar-thumb, 
+#requestList::-webkit-scrollbar-thumb, 
+#accountList::-webkit-scrollbar-thumb, 
+#photonFileList::-webkit-scrollbar-thumb {
+    background-color: #1da1f2;
+    border-radius: 10px;
+    border: 2px solid #15202b;
+}
+
+.scrollabletextbox::-webkit-scrollbar-track, 
+#requestList::-webkit-scrollbar-track, 
+#accountList::-webkit-scrollbar-track, 
+#photonFileList::-webkit-scrollbar-track {
+    background-color: #192734;
+    border-radius: 10px;
+}
+
+/* Fixing Photon File List Items */
+#photonFileList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 235px;
+    overflow-y: auto;
+    position: relative;
+    background-color: #192734;
+    border-radius: 6px;
+    border: 1px solid #38444d;
+}
+
+/* Individual list items */
+#photonFileList li {
+    padding: 8px;
+    margin: 4px 0;
+    background-color: #253341;
+    border: 1px solid #38444d;
+    cursor: pointer;
+    color: white;
+    border-radius: 6px;
+    transition: background-color 0.3s ease;
+}
+
+/* Hover effect for list items */
+#photonFileList li:hover {
+    background-color: #2e3d4a;
+}
+
+/* Styled Context Menu */
+.context-menu {
+    position: absolute;
+    background-color: #192734;
+    border: 1px solid #38444d;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    width: 160px;
+    border-radius: 6px;
+    display: none;
+    padding: 5px 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #1da1f2;
+    border: 2px solid #1da1f2;
+}
+
+/* Style each menu option */
+.context-menu .menu-option {
+    padding: 10px;
+    font-size: 14px;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: block;
+}
+
+/* Hover effect for options */
+.context-menu .menu-option:hover {
+    background-color: #253341;
+}
+
+/* Special colors for actions */
+.context-menu .menu-option.delete {
+    color: #f4212e; /* Twitter red for delete */
+}
+
+.context-menu .menu-option.delete:hover {
+    background-color: #2e1517;
+}
+
+.context-menu .menu-option.open-location {
+    color: #17bf63; /* Twitter green */
+}
+
+.context-menu .menu-option.open-location:hover {
+    background-color: #152e22;
+}
+
+.context-menu .menu-option.edit {
+    color: #1da1f2;
+}
+
+.context-menu .menu-option.edit:hover {
+    background-color: #152e3d;
+}
+
+#lobbyChatLog {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    border: 1px solid #38444d;
+    padding: 5px;
+    background-color: #192734;
+    color: white;
+}
+
+input[type="checkbox"] {
+    margin-right: 10px;
+    accent-color: #1da1f2;
+    border-radius: 5px;
+    background-color: #253341;
+    border: 2px solid #38444d;
+}
+
+/* Slider Styling */
+input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 92%;
+    height: 8px;
+    background: #253341;
+    border: 1px solid #38444d;
+    border-radius: 5px;
+    outline: none;
+    margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+/* Slider Track */
+input[type="range"]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    background: #253341;
+    border-radius: 5px;
+    border: 1px solid #38444d;
+}
+
+/* Slider Thumb */
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #1da1f2;
+    border: 2px solid #15202b;
+    cursor: pointer;
+    margin-top: -4.5px;
+    transition: background 0.3s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    background: #1a91da;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #1da1f2;
+    border: 2px solid #15202b;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+    height: 8px;
+    background: #253341;
+    border: 1px solid #38444d;
+    border-radius: 5px;
+}
+
+/* Slider Value Label */
+#rankValue {
+    color: #ffffff;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+#sendLobbyMessage {
+    padding: 5px;
+}
+
+/* MITM Box Styling */
+#mitmBox h3 {
+    color: #1da1f2;
+    margin-bottom: 15px;
+}
+
+#mitmBox label {
+    color: white;
+    margin-right: 15px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+#mitmBox button {
+    background-color: #1da1f2;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+#mitmBox button:hover {
+    background-color: #1a91da;
+}
+
+#mitmBox input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+#mitmBox label {
+    color: white;
+    margin-right: 15px;
+}

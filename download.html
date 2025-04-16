@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BFHacks Downloader</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Roboto Mono', 'Consolas', monospace;
+    }
+
+    :root {
+      /* Dark Theme (Default) */
+      --bg-primary: #1e1e2e;
+      --bg-secondary: #181825;
+      --bg-tertiary: #11111b;
+      --text-primary: #cdd6f4;
+      --text-secondary: #a6adc8;
+      --text-accent: #89b4fa;
+      --accent-color: #74c7ec;
+      --border-color: rgba(127, 132, 156, 0.2);
+      --error-color: #f38ba8;
+      --warning-color: #fab387;
+      --info-color: #89dceb;
+      --success-color: #a6e3a1;
+      --debug-color: #cba6f7;
+      --trace-color: #9399b2;
+    }
+
+    /* Light Theme */
+    .light-theme {
+      --bg-primary: #f5f5fa;
+      --bg-secondary: #eaeaef;
+      --bg-tertiary: #dcdce4;
+      --text-primary: #2d2d3f;
+      --text-secondary: #5d5d6f;
+      --text-accent: #3b7dd8;
+      --accent-color: #1a8ad4;
+      --border-color: rgba(80, 85, 110, 0.2);
+      --error-color: #e54666;
+      --warning-color: #e5844d;
+      --info-color: #26a4be;
+      --success-color: #3cac54;
+      --debug-color: #9d57d3;
+      --trace-color: #6c6c89;
+    }
+
+    html, body {
+      height: 100vh;
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+
+    .window-container {
+      width: 700px;
+      max-width: 1920px;
+      height: 99%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
+                  0 0 0 1px rgba(255, 255, 255, 0.05),
+                  0 1px 0 rgba(255, 255, 255, 0.1) inset;
+      backdrop-filter: blur(10px);
+      animation: container-reveal 0.5s ease-out;
+    }
+
+    @keyframes container-reveal {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .title-bar {
+      height: 44px;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .title-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, 
+                  rgba(255, 255, 255, 0), 
+                  rgba(255, 255, 255, 0.1), 
+                  rgba(255, 255, 255, 0));
+    }
+
+    .title-text {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: var(--text-accent);
+    }
+    
+    .title-icon {
+      width: 22px;
+      height: 22px;
+      margin-right: 10px;
+      position: relative;
+      background: url(https://th.bing.com/th/id/OIP.gB2bCkwaHym15fmwikVGNQHaHa?rs=1&pid=ImgDetMain);
+      border-radius: 4px;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .title-icon::before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+
+    .window-controls button {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .window-controls button:hover {
+      transform: scale(1.1);
+    }
+
+    .window-controls button:active {
+      transform: scale(0.95);
+    }
+
+    .window-controls button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .window-controls button:hover::before {
+      opacity: 1;
+    }
+
+    .minimize { 
+      background: #fdbc40; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .minimize::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cline x1='2' y1='4' x2='6' y2='4' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .maximize { 
+      background: #34c749; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .maximize::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Crect x='2' y='2' width='4' height='4' stroke='rgba(0,0,0,0.5)' stroke-width='1' fill='none' rx='1'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .close { 
+      background: #fc6058; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .close::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cline x1='2' y1='2' x2='6' y2='6' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3Cline x1='6' y1='2' x2='2' y2='6' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .status-indicator {
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .light-theme .status-indicator {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .status-indicator.active {
+      background: rgba(166, 227, 161, 0.1);
+      color: var(--success-color);
+    }
+
+    .loading-dots {
+      display: inline-flex;
+      gap: 4px;
+      margin-left: 6px;
+      align-items: center;
+      height: 10px;
+    }
+
+    .loading-dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.7;
+    }
+
+    .loading-dots span:nth-child(1) {
+      animation: pulse 1.2s infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation: pulse 1.2s infinite 0.4s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation: pulse 1.2s infinite 0.8s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.5); opacity: 0.4; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    .content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background: var(--bg-secondary);
+      background-image: 
+        radial-gradient(rgba(137, 180, 250, 0.03) 1px, transparent 1px),
+        radial-gradient(rgba(137, 180, 250, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+      background-position: 0 0, 15px 15px;
+    }
+
+    .light-theme .content {
+      background-image: 
+        radial-gradient(rgba(59, 125, 216, 0.07) 1px, transparent 1px),
+        radial-gradient(rgba(59, 125, 216, 0.07) 1px, transparent 1px);
+    }
+
+    .download-container {
+      width: 96%;
+      max-width: 1920px;
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .download-container::before {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: linear-gradient(135deg, var(--accent-color), transparent);
+      filter: blur(40px);
+      opacity: 0.1;
+      animation: rotate 20s infinite linear;
+      top: -150px;
+      right: -150px;
+      border-radius: 50%;
+      z-index: 0;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .download-title {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--accent-color);
+      margin-bottom: 10px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+      position: relative;
+      z-index: 1;
+    }
+
+    .file-info {
+      display: flex;
+      width: 100%;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 10px;
+      background: var(--bg-secondary);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      z-index: 1;
+    }
+
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .file-name {
+      color: var(--debug-color);
+    }
+
+    .file-size {
+      color: var(--text-accent);
+    }
+
+    .progress-container {
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .progress-bar {
+      width: 100%;
+      background-color: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      height: 12px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) inset;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0;
+      background: linear-gradient(to right, var(--accent-color), var(--text-accent));
+      border-radius: 12px;
+      position: relative;
+      transition: width 0.3s ease;
+    }
+
+    .progress::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.1) 100%
+      );
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .progress-stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .download-speed {
+      color: var(--success-color);
+    }
+
+    .message {
+      font-size: 16px;
+      color: var(--text-primary);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+      animation: pulse-text 2s infinite;
+    }
+
+    @keyframes pulse-text {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 1; }
+    }
+
+    .download-details {
+      width: 100%;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 15px;
+      margin-top: 5px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .detail-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .detail-label {
+      color: var(--text-secondary);
+    }
+
+    .detail-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .footer {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer-stats {
+      display: flex;
+      gap: 15px;
+    }
+
+    .footer-stat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .footer-stat-value {
+      color: var(--text-accent);
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: absolute;
+      top: 12px;
+      right: 80px;
+      width: 70px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+      overflow: hidden;
+    }
+
+    .theme-option {
+      flex: 1;
+      height: 18px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      z-index: 1;
+      transition: color 0.3s ease;
+    }
+
+    .theme-slider {
+      position: absolute;
+      width: 35px;
+      height: 18px;
+      background: var(--accent-color);
+      border-radius: 9px;
+      transition: transform 0.3s ease;
+    }
+
+    .light-theme .theme-slider {
+      transform: translateX(35px);
+    }
+
+    .dark-text {
+      color: var(--bg-tertiary);
+    }
+
+    .light-text {
+      color: var(--text-primary);
+    }
+
+    .light-theme .dark-text {
+      color: var(--text-primary);
+    }
+
+    .light-theme .light-text {
+      color: var(--bg-tertiary);
+    }
+  </style>
+</head>
+<body>
+  <div class="window-container" id="window-container">
+    <div class="title-bar">
+      <div class="title-text">
+        <div class="title-icon"></div>
+        BFHacks Downloader
+        <div id="status-indicator" class="status-indicator active">
+          <span id="status-text">Downloading</span>
+          <div class="loading-dots" id="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      <div class="theme-toggle" id="theme-toggle">
+        <div class="theme-option dark-text">Dark</div>
+        <div class="theme-option light-text">Light</div>
+        <div class="theme-slider"></div>
+      </div>
+      <div class="window-controls">
+        <button class="minimize" onclick="windowControls.minimize()"></button>
+        <button class="maximize" onclick="windowControls.maximize()"></button>
+        <button class="close" onclick="windowControls.close()"></button>
+      </div>
+    </div>
+    
+    <div class="content">
+      <div class="download-container">
+        <h2 class="download-title">Downloading Game Files</h2>
+        
+        <div class="file-info">
+          <div class="file-item">
+            <span class="file-name">game.loader.js</span>
+            <span class="file-size">9.1 KB</span>
+          </div>
+          <div class="file-item">
+            <span class="file-name">game.wasm.gz</span>
+            <span class="file-size">12.3 MB</span>
+          </div>
+          <div class="file-item">
+            <span class="file-name">game.data.gz</span>
+            <span class="file-size">342.3 MB</span>
+          </div>
+          <div class="file-item">
+            <span class="file-name">game.framework.js.gz</span>
+            <span class="file-size">1.4 KB</span>
+          </div>
+        </div>
+        
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+          </div>
+          <div class="progress-stats">
+            <div id="progress-text">Downloaded: 127.4 MB / 259.0 MB</div>
+            <div class="download-speed" id="download-speed">4.2 MB/s</div>
+          </div>
+        </div>
+        
+        <div class="message" id="statusMessage">Downloading game files. Please wait...</div>
+        
+        <div class="download-details">
+          <div class="detail-item">
+            <span class="detail-label">Current file:</span>
+            <span class="detail-value" id="current-file">assets.bin</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Estimated time:</span>
+            <span class="detail-value" id="eta">01:23 remaining</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Server:</span>
+            <span class="detail-value">cdn-us-east.snoofz.net</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <div>BFHacks v1.2.4</div>
+      <div class="footer-stats">
+        <div class="footer-stat">
+          <span>Download:</span>
+          <span class="footer-stat-value" id="download-percent">49.2%</span>
+        </div>
+        <div class="footer-stat">
+          <span>Throttle:</span>
+          <span class="footer-stat-value">None</span>
+        </div>
+        <div class="footer-stat">
+          <span>Status:</span>
+          <span class="footer-stat-value" id="download-status">Active</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize variables for download tracking
+    let progressBar = document.getElementById('progress');
+    let progressText = document.getElementById('progress-text');
+    let downloadSpeed = document.getElementById('download-speed');
+    let downloadPercent = document.getElementById('download-percent');
+    let statusMessage = document.getElementById('statusMessage');
+    let currentFile = document.getElementById('current-file');
+    let eta = document.getElementById('eta');
+    let downloadStatus = document.getElementById('download-status');
+    let statusIndicator = document.getElementById('status-indicator');
+    let statusText = document.getElementById('status-text');
+    let loadingDots = document.getElementById('loading-dots');
+    
+    // Add event listeners for IPC events from the main process
+    const { ipcRenderer } = require("electron");
+    
+    const windowControls = {
+      minimize: () => {
+        ipcRenderer.send('minimize-window');
+      },
+      maximize: () => {
+        ipcRenderer.send('maximize-window');
+      },
+      close: () => {
+        ipcRenderer.send('close-window');
+      }
+    };
+    // Listen for download progress updates
+    ipcRenderer.on('update-download-progress', (event, progressValue) => {
+      clearInterval(progressInterval); // Stop simulation if any
+      updateProgress(progressValue);
+    });
+    
+    // Listen for download statistics updates
+    ipcRenderer.on('download-stats', (event, stats) => {
+      if (stats.speed) downloadSpeed.textContent = stats.speed;
+      if (stats.eta) eta.textContent = stats.eta;
+      if (stats.currentFile) currentFile.textContent = stats.currentFile;
+    });
+    
+    // Listen for file status updates
+    ipcRenderer.on('file-status', (event, fileInfo) => {
+      // Update file status in the UI
+      const fileElements = document.querySelectorAll('.file-item');
+      fileElements.forEach(item => {
+        const fileName = item.querySelector('.file-name').textContent;
+        if (fileName === fileInfo.filename) {
+          if (fileInfo.size) {
+            item.querySelector('.file-size').textContent = fileInfo.size;
+          }
+          
+          // Add visual indicators for file status
+          item.classList.remove('downloading', 'complete', 'error');
+          if (fileInfo.status === 'downloading') {
+            item.classList.add('downloading');
+          } else if (fileInfo.status === 'complete') {
+            item.classList.add('complete');
+          } else if (fileInfo.status === 'error') {
+            item.classList.add('error');
+          }
+        }
+      });
+    });
+    
+    // Listen for file progress updates
+    ipcRenderer.on('file-progress', (event, fileProgress) => {
+      // Update individual file progress if needed
+    });
+    
+    // Listen for extraction progress updates
+    ipcRenderer.on('extraction-progress', (event, extractInfo) => {
+      if (extractInfo.file) {
+        currentFile.textContent = `Extracting ${extractInfo.file}`;
+      }
+      
+      if (extractInfo.status === 'complete') {
+        // Update UI to show extraction progress
+        const fileElements = document.querySelectorAll('.file-item');
+        fileElements.forEach(item => {
+          const fileName = item.querySelector('.file-name').textContent;
+          if (fileName === extractInfo.file) {
+            item.classList.add('extracted');
+          }
+        });
+      }
+    });
+    
+    // Listen for download status changes
+    ipcRenderer.on('download-status', (event, status) => {
+      if (status.status === 'extracting') {
+        statusText.textContent = 'Extracting';
+        statusMessage.textContent = 'Extracting game files. Please wait...';
+        downloadStatus.textContent = 'Extracting';
+      } else if (status.status === 'complete') {
+        statusText.textContent = 'Complete';
+        statusMessage.textContent = 'Game files ready! Starting game...';
+        downloadStatus.textContent = 'Complete';
+        statusIndicator.classList.add('success');
+        
+        // Hide loading dots when complete
+        loadingDots.style.display = 'none';
+      } else if (status.status === 'error') {
+        statusText.textContent = 'Error';
+        statusMessage.textContent = status.message || 'An error occurred during download.';
+        downloadStatus.textContent = 'Failed';
+        statusIndicator.classList.remove('active');
+        statusIndicator.classList.add('error');
+        
+        // Hide loading dots on error
+        loadingDots.style.display = 'none';
+      }
+    });
+    
+    // Initialize file list
+    ipcRenderer.on('init-download', (event, initData) => {
+      if (initData.files && initData.files.length > 0) {
+        // Clear existing file list
+        const fileInfo = document.querySelector('.file-info');
+        fileInfo.innerHTML = '';
+        
+        // Add each file to the list
+        initData.files.forEach(file => {
+          const fileItem = document.createElement('div');
+          fileItem.className = 'file-item';
+          fileItem.innerHTML = `
+            <span class="file-name">${file.name}</span>
+            <span class="file-size">${file.size}</span>
+          `;
+          fileInfo.appendChild(fileItem);
+        });
+      }
+    });
+    
+    function updateProgress(value) {
+      progressBar.style.width = `${value}%`;
+      const totalSize = 259.0; // This should be replaced with the actual size
+      const downloadedMB = (totalSize * (value / 100)).toFixed(1);
+      progressText.textContent = `Downloaded: ${downloadedMB} MB / ${totalSize.toFixed(1)} MB`;
+      downloadPercent.textContent = `${value.toFixed(1)}%`;
+    }
+    
+    // For preview/testing only - simulate download progress
+    function simulateDownload() {
+      let progress = 0;
+      progressInterval = setInterval(() => {
+        progress += 0.5;
+        if (progress > 100) {
+          clearInterval(progressInterval);
+          progress = 100;
+          
+          // Simulate extraction phase
+          statusText.textContent = 'Extracting';
+          statusMessage.textContent = 'Extracting game files. Please wait...';
+          
+          setTimeout(() => {
+            // Simulate completion
+            statusText.textContent = 'Complete';
+            statusMessage.textContent = 'Game files ready! Starting game...';
+            loadingDots.style.display = 'none';
+          }, 3000);
+        }
+        updateProgress(progress);
+      }, 100);
+    }
+    
+    // Add CSS styles for file status indicators
+    const style = document.createElement('style');
+    style.textContent = `
+      .file-item {
+        transition: all 0.3s ease;
+      }
+      
+      .file-item.downloading {
+        background: rgba(137, 180, 250, 0.1);
+      }
+      
+      .file-item.complete {
+        background: rgba(166, 227, 161, 0.1);
+      }
+      
+      .file-item.extracted {
+        background: rgba(203, 166, 247, 0.1);
+      }
+      
+      .file-item.error {
+        background: rgba(243, 139, 168, 0.1);
+      }
+      
+      .status-indicator.error {
+        background: rgba(243, 139, 168, 0.1);
+        color: var(--error-color);
+      }
+      
+      .status-indicator.success {
+        background: rgba(166, 227, 161, 0.1);
+        color: var(--success-color);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Start simulation for preview purposes
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!window.electron) {
+        simulateDownload();
+      }
+    });
+  </script>
+</body>
+</html>

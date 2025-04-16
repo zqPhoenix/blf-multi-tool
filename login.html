@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BLFHacks Login</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Roboto Mono', 'Consolas', monospace;
+    }
+
+    :root {
+      /* Dark Theme (Default) */
+      --bg-primary: #1e1e2e;
+      --bg-secondary: #181825;
+      --bg-tertiary: #11111b;
+      --text-primary: #cdd6f4;
+      --text-secondary: #a6adc8;
+      --text-accent: #89b4fa;
+      --accent-color: #74c7ec;
+      --border-color: rgba(127, 132, 156, 0.2);
+      --error-color: #f38ba8;
+      --warning-color: #fab387;
+      --info-color: #89dceb;
+      --success-color: #a6e3a1;
+    }
+
+    html, body {
+      height: 100vh;
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: transparent;
+      color: var(--text-primary);
+    }
+
+    .login-container {
+      width: 380px;
+      background: var(--bg-primary);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
+                  0 0 0 1px rgba(255, 255, 255, 0.05),
+                  0 1px 0 rgba(255, 255, 255, 0.1) inset;
+      animation: container-reveal 0.5s ease-out;
+    }
+
+    @keyframes container-reveal {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Window title bar */
+    .title-bar {
+      height: 44px;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .title-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, 
+                  rgba(255, 255, 255, 0), 
+                  rgba(255, 255, 255, 0.1), 
+                  rgba(255, 255, 255, 0));
+    }
+
+    .title-text {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: var(--text-accent);
+    }
+    
+    .title-icon {
+      width: 22px;
+      height: 22px;
+      margin-right: 10px;
+      position: relative;
+      background-color: var(--accent-color);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .title-icon::before {
+      content: '⚡';
+      font-size: 12px;
+      color: white;
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+
+    .window-controls button {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .window-controls button:hover {
+      transform: scale(1.1);
+    }
+
+    .window-controls button:active {
+      transform: scale(0.95);
+    }
+
+    .window-controls button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .window-controls button:hover::before {
+      opacity: 1;
+    }
+
+    .minimize { 
+      background: #fdbc40; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .minimize::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cline x1='2' y1='4' x2='6' y2='4' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .maximize { 
+      background: #34c749; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .maximize::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Crect x='2' y='2' width='4' height='4' stroke='rgba(0,0,0,0.5)' stroke-width='1' fill='none' rx='1'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .close { 
+      background: #fc6058; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .close::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cline x1='2' y1='2' x2='6' y2='6' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3Cline x1='6' y1='2' x2='2' y2='6' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    /* Login form styles */
+    .login-content {
+      padding: 25px 30px 30px;
+    }
+
+    .login-title {
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-accent);
+      text-align: center;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+
+    .form-input {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px 15px;
+      font-size: 14px;
+      color: var(--text-primary);
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(116, 199, 236, 0.2);
+    }
+
+    .form-input::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    .login-button {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .login-button:hover {
+      background: #62b5d9;
+    }
+
+    .login-button:active {
+      transform: scale(0.98);
+    }
+
+    .login-button.loading {
+      opacity: 0.8;
+      cursor: wait;
+    }
+
+    .login-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .help-link {
+      color: var(--text-accent);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .help-link:hover {
+      color: var(--accent-color);
+      text-decoration: underline;
+    }
+
+    .alert {
+      background: rgba(243, 139, 168, 0.1);
+      border-left: 3px solid var(--error-color);
+      color: var(--error-color);
+      padding: 10px 15px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .alert.visible {
+      display: block;
+      animation: alert-fade 0.3s ease-out;
+    }
+
+    @keyframes alert-fade {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading-dots {
+      display: inline-flex;
+      gap: 4px;
+      margin-left: 6px;
+      align-items: center;
+      height: 10px;
+      display: none;
+    }
+
+    .login-button.loading .loading-dots {
+      display: inline-flex;
+    }
+
+    .loading-dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: white;
+      opacity: 0.7;
+    }
+
+    .loading-dots span:nth-child(1) {
+      animation: pulse 1.2s infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation: pulse 1.2s infinite 0.4s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation: pulse 1.2s infinite 0.8s;
+    }
+
+    /* Remember me checkbox styling */
+    .remember-me {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .remember-me input {
+      margin-right: 8px;
+      accent-color: var(--accent-color);
+    }
+
+    .remember-me label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    /* Success alert style */
+    .alert.success {
+      background: rgba(166, 227, 161, 0.1);
+      border-left-color: var(--success-color);
+      color: var(--success-color);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.5); opacity: 0.4; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <!-- Window Title Bar -->
+    <div class="title-bar">
+      <div class="title-text">
+        <div class="title-icon"></div>
+        <span>BLFHacks Login</span>
+      </div>
+      <div class="window-controls">
+        <button class="minimize" onclick="windowControls.minimize()"></button>
+        <button class="maximize" onclick="windowControls.maximize()"></button>
+        <button class="close" onclick="windowControls.close()"></button>
+      </div>
+    </div>
+    
+    <!-- Login Form Content -->
+    <div class="login-content">
+      <h1 class="login-title">Welcome Back</h1>
+      <p class="login-subtitle">Sign in to continue to BLFHacks</p>
+      
+      <div class="alert" id="alert-box">Invalid username or password</div>
+      
+      <div class="form-group">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" id="username" class="form-input" placeholder="Enter your username" autocomplete="username">
+      </div>
+      
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" class="form-input" placeholder="Enter your password" autocomplete="current-password">
+      </div>
+      
+      <div class="remember-me">
+        <input type="checkbox" id="remember-me" checked>
+        <label for="remember-me">Remember me</label>
+      </div>
+      
+      <button type="button" id="login-button" class="login-button">
+        Sign In
+        <div class="loading-dots">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+      
+      <div class="login-footer">
+        Forgot password? <a href="#" class="help-link">Reset it</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    const windowControls = {
+      minimize: () => {
+        ipcRenderer.send('minimize-window');
+      },
+      maximize: () => {
+        ipcRenderer.send('maximize-window');
+      },
+      close: () => {
+        ipcRenderer.send('close-window');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginButton = document.getElementById('login-button');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const rememberMeCheckbox = document.getElementById('remember-me');
+      const alertBox = document.getElementById('alert-box');
+      
+      // Storage keys
+      const STORAGE_KEY = 'blfhacks_credentials';
+      const TOKEN_KEY = 'blfhacks_token';
+      
+      // Show alert message
+      function showAlert(message, isSuccess = false) {
+        alertBox.textContent = message;
+        alertBox.classList.add('visible');
+        
+        // Toggle success class
+        if (isSuccess) {
+          alertBox.classList.add('success');
+        } else {
+          alertBox.classList.remove('success');
+        }
+        
+        // Auto hide after 5 seconds
+        setTimeout(() => {
+          alertBox.classList.remove('visible');
+        }, 5000);
+      }
+      
+      // Save credentials to localStorage
+      function saveCredentials(username, password, token) {
+        if (rememberMeCheckbox.checked) {
+          // Encrypt password before storing (this is a basic encryption and not secure)
+          // In a production app, use a more secure method like the electron keychain
+          const encryptedPassword = btoa(password); // Simple base64 encoding (not secure)
+          
+          // Save credentials
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            username,
+            password: encryptedPassword
+          }));
+          
+          // Save the auth token separately
+          if (token) {
+            localStorage.setItem(TOKEN_KEY, token);
+          }
+          
+          console.log('Credentials saved to localStorage');
+        }
+      }
+      
+      // Load saved credentials
+      function loadCredentials() {
+        const savedCredentials = localStorage.getItem(STORAGE_KEY);
+        if (savedCredentials) {
+          try {
+            const { username, password } = JSON.parse(savedCredentials);
+            usernameInput.value = username;
+            
+            // Decrypt the password
+            passwordInput.value = atob(password); // Simple base64 decoding
+            
+            console.log('Loaded saved credentials');
+            return true;
+          } catch (error) {
+            console.error('Error loading saved credentials:', error);
+            // Clear potentially corrupted data
+            localStorage.removeItem(STORAGE_KEY);
+          }
+        }
+        return false;
+      }
+      
+      // Try auto-login with saved token
+      async function tryAutoLogin() {
+        const token = localStorage.getItem(TOKEN_KEY);
+        
+        if (token) {
+          try {
+            // Show loading state
+            loginButton.classList.add('loading');
+            loginButton.disabled = true;
+            
+            // Validate the token with the server
+            const response = await fetch('https://snoofz.net/api/validate-token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+              // Token is valid, proceed with auto-login
+              showAlert('Auto-login successful!', true);
+              ipcRenderer.send('login-success', { token });
+              return true;
+            } else {
+              // Token is invalid or expired, remove it
+              localStorage.removeItem(TOKEN_KEY);
+              console.log('Saved token is invalid or expired');
+            }
+          } catch (error) {
+            console.error('Auto-login error:', error);
+          } finally {
+            // Remove loading state if auto-login failed
+            loginButton.classList.remove('loading');
+            loginButton.disabled = false;
+          }
+        }
+        
+        return false;
+      }
+      
+      // Handle login form submission
+      loginButton.addEventListener('click', async () => {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+        
+        // Basic validation
+        if (!username || !password) {
+          showAlert('Please enter both username and password');
+          return;
+        }
+        
+        // Show loading state
+        loginButton.classList.add('loading');
+        loginButton.disabled = true;
+        
+        try {
+          const result = await tryLogin(username, password);
+          
+          if (result && result.success) {
+            // Save credentials if "Remember me" is checked
+            saveCredentials(username, password, result.token);
+            
+            // Show success message
+            showAlert('Login successful!', true);
+            
+            // Notify the main process of successful login
+            ipcRenderer.send('login-success', { token: result.token });
+          }
+        } catch (error) {
+          console.error('Login error:', error);
+          showAlert('An error occurred. Please try again.');
+        } finally {
+          // Remove loading state
+          loginButton.classList.remove('loading');
+          loginButton.disabled = false;
+        }
+      });
+      
+      // Also submit on Enter key
+      passwordInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !loginButton.disabled) {
+          loginButton.click();
+        }
+      });
+      
+      // Login function
+      async function tryLogin(username, password) {
+        const requestData = { username, password, nonce: new Date().toISOString() }; // Add nonce
+        const checksum = await sha512(JSON.stringify(requestData));
+        const response = await fetch('https://snoofz.net/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ...requestData, checksum }) // Send computed checksum
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          showAlert(result.message || 'Login failed. Please check your credentials.');
+        }
+        
+        return result;
+      }
+      
+      // Hash function
+      async function sha512(str) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(str);
+        const hashBuffer = await crypto.subtle.digest('SHA-512', data);
+        return Array.from(new Uint8Array(hashBuffer))
+          .map(byte => byte.toString(16).padStart(2, '0'))
+          .join('');
+      }
+      
+      // On page load, try to auto-login
+      async function initializeLogin() {
+        // First try auto-login with saved token
+        const autoLoginSuccessful = await tryAutoLogin();
+        
+        if (!autoLoginSuccessful) {
+          // If auto-login failed, load saved credentials
+          loadCredentials();
+          
+          // Focus username field if empty, otherwise focus password
+          if (!usernameInput.value) {
+            usernameInput.focus();
+          } else {
+            passwordInput.focus();
+          }
+        }
+      }
+      
+      // Initialize the login process
+      initializeLogin();
+    });
+  </script>
+</body>
+</html>

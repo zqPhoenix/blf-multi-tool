@@ -1,0 +1,1042 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BLFHacks Debug Console</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Fira Code', 'JetBrains Mono', 'Roboto Mono', 'Consolas', monospace;
+    }
+
+    :root {
+      /* Dark Theme (Default) */
+      --bg-primary: #1e1e2e;
+      --bg-secondary: #181825;
+      --bg-tertiary: #11111b;
+      --text-primary: #cdd6f4;
+      --text-secondary: #a6adc8;
+      --text-accent: #89b4fa;
+      --accent-color: #74c7ec;
+      --border-color: rgba(127, 132, 156, 0.2);
+      --error-color: #f38ba8;
+      --warning-color: #fab387;
+      --info-color: #89dceb;
+      --success-color: #a6e3a1;
+      --debug-color: #cba6f7;
+      --trace-color: #9399b2;
+    }
+
+    /* Light Theme */
+    .light-theme {
+      --bg-primary: #f5f5fa;
+      --bg-secondary: #eaeaef;
+      --bg-tertiary: #dcdce4;
+      --text-primary: #2d2d3f;
+      --text-secondary: #5d5d6f;
+      --text-accent: #3b7dd8;
+      --accent-color: #1a8ad4;
+      --border-color: rgba(80, 85, 110, 0.2);
+      --error-color: #e54666;
+      --warning-color: #e5844d;
+      --info-color: #26a4be;
+      --success-color: #3cac54;
+      --debug-color: #9d57d3;
+      --trace-color: #6c6c89;
+    }
+
+    @keyframes gradient-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    html, body {
+      height: 100vh;
+      background: transparent;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-primary);
+    }
+
+    .console-container {
+      width: 98%;
+      max-width: 1920px;
+      height: 96%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 
+                  0 0 0 1px rgba(255, 255, 255, 0.05),
+                  0 1px 0 rgba(255, 255, 255, 0.1) inset;
+      backdrop-filter: blur(10px);
+      animation: container-reveal 0.5s ease-out;
+    }
+
+    @keyframes container-reveal {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .title-bar {
+      height: 44px;
+      background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .title-bar::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, 
+                  rgba(255, 255, 255, 0), 
+                  rgba(255, 255, 255, 0.1), 
+                  rgba(255, 255, 255, 0));
+    }
+
+    .title-text {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: var(--text-accent);
+    }
+    
+    .title-icon {
+      width: 22px;
+      height: 22px;
+      margin-right: 10px;
+      position: relative;
+      background: url(https://th.bing.com/th/id/OIP.gB2bCkwaHym15fmwikVGNQHaHa?rs=1&pid=ImgDetMain);
+      border-radius: 4px;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .title-icon::before {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      background: rgba(0, 0, 0, 0.2);
+      clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    }
+
+    .window-controls {
+      display: flex;
+      gap: 8px;
+      -webkit-app-region: no-drag;
+    }
+
+    .window-controls button {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      position: relative;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .window-controls button:hover {
+      transform: scale(1.1);
+    }
+
+    .window-controls button:active {
+      transform: scale(0.95);
+    }
+
+    .window-controls button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 50%;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .window-controls button:hover::before {
+      opacity: 1;
+    }
+
+    .minimize { 
+      background: #fdbc40; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .minimize::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cline x1='2' y1='4' x2='6' y2='4' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .maximize { 
+      background: #34c749; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .maximize::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Crect x='2' y='2' width='4' height='4' stroke='rgba(0,0,0,0.5)' stroke-width='1' fill='none' rx='1'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .close { 
+      background: #fc6058; 
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+    }
+    
+    .close::before {
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3E%3Cline x1='2' y1='2' x2='6' y2='6' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3Cline x1='6' y1='2' x2='2' y2='6' stroke='rgba(0,0,0,0.5)' stroke-width='1' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center;
+    }
+
+    .status-indicator {
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .light-theme .status-indicator {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .status-indicator.active {
+      background: rgba(166, 227, 161, 0.1);
+      color: var(--success-color);
+    }
+
+    .loading-dots {
+      display: inline-flex;
+      gap: 4px;
+      margin-left: 6px;
+      align-items: center;
+      height: 10px;
+    }
+
+    .loading-dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.7;
+    }
+
+    .loading-dots span:nth-child(1) {
+      animation: pulse 1.2s infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation: pulse 1.2s infinite 0.4s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation: pulse 1.2s infinite 0.8s;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.5); opacity: 0.4; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+
+    .console-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: var(--bg-secondary);
+    }
+
+    .console-header {
+      height: 36px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 15px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .light-theme .console-header {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .console-tab {
+      padding: 0 12px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      border-right: 1px solid var(--border-color);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .console-tab.active {
+      color: var(--text-accent);
+      background: rgba(127, 132, 156, 0.05);
+    }
+
+    .console-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-color);
+    }
+
+    .console {
+      flex: 1;
+      padding: 15px;
+      font-size: 14px;
+      line-height: 1.5;
+      height: calc(100% - 36px);
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      background-image: 
+        radial-gradient(rgba(137, 180, 250, 0.03) 1px, transparent 1px),
+        radial-gradient(rgba(137, 180, 250, 0.03) 1px, transparent 1px);
+      background-size: 30px 30px;
+      background-position: 0 0, 15px 15px;
+    }
+
+    .light-theme .console {
+      background-image: 
+        radial-gradient(rgba(59, 125, 216, 0.07) 1px, transparent 1px),
+        radial-gradient(rgba(59, 125, 216, 0.07) 1px, transparent 1px);
+    }
+
+    .console p {
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed rgba(127, 132, 156, 0.1);
+    }
+
+    /* Animation class that can be toggled */
+    .animate-logs .console p {
+      animation: log-reveal 0.3s ease-out forwards;
+      opacity: 0;
+      transform: translateY(5px);
+    }
+
+    @keyframes log-reveal {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .console p:last-child {
+      margin-bottom: 0;
+      border-bottom: none;
+    }
+
+    /* Enhanced log colors */
+    .log {
+      color: var(--text-primary);
+    }
+
+    .info {
+      color: var(--info-color);
+    }
+
+    .warn {
+      color: var(--warning-color);
+      position: relative;
+      padding-left: 18px;
+    }
+
+    .warn::before {
+      content: '⚠';
+      position: absolute;
+      left: 0;
+      font-size: 12px;
+    }
+
+    .error {
+      color: var(--error-color);
+      font-weight: 500;
+      position: relative;
+      padding-left: 18px;
+      background: rgba(243, 139, 168, 0.05);
+      padding: 5px 10px;
+      border-radius: 4px;
+      border-left: 2px solid var(--error-color);
+    }
+
+    .light-theme .error {
+      background: rgba(229, 70, 102, 0.05);
+    }
+
+    .error::before {
+      content: '×';
+      position: absolute;
+      left: 5px;
+      font-weight: bold;
+    }
+
+    .success {
+      color: var(--success-color);
+      position: relative;
+      padding-left: 18px;
+    }
+
+    .success::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+
+    .debug {
+      color: var(--debug-color);
+    }
+
+    .trace {
+      color: var(--trace-color);
+      font-size: 0.9em;
+    }
+
+    .console::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .console::-webkit-scrollbar-thumb {
+      background: rgba(127, 132, 156, 0.3);
+      border-radius: 4px;
+    }
+
+    .console::-webkit-scrollbar-thumb:hover {
+      background: rgba(127, 132, 156, 0.5);
+    }
+
+    .console::-webkit-scrollbar-track {
+      background: rgba(30, 30, 50, 0.3);
+      border-radius: 4px;
+    }
+
+    .light-theme .console::-webkit-scrollbar-track {
+      background: rgba(200, 200, 220, 0.3);
+    }
+
+    .console-footer {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid var(--border-color);
+      padding: 0 15px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: var(--bg-tertiary);
+      justify-content: space-between;
+    }
+
+    .footer-stats {
+      display: flex;
+      gap: 15px;
+    }
+
+    .footer-stat {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .footer-stat-value {
+      color: var(--text-accent);
+    }
+
+    /* Animated typing cursor */
+    .typing-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 14px;
+      background: var(--text-accent);
+      animation: blink 1s infinite;
+      margin-left: 2px;
+      vertical-align: middle;
+      border-radius: 1px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 1; }
+    }
+
+    /* Highlight for file names and paths */
+    .highlight-path {
+      color: var(--debug-color);
+      font-weight: 500;
+    }
+
+    /* Settings Panel */
+    .settings-panel {
+      display: none;
+      padding: 15px;
+      height: calc(100% - 36px);
+      overflow-y: auto;
+      background: var(--bg-secondary);
+    }
+
+    .settings-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .settings-section:last-child {
+      border-bottom: none;
+    }
+
+    .settings-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: var(--text-accent);
+    }
+
+    .settings-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .setting-name {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .setting-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Toggle Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--bg-tertiary);
+      transition: .3s;
+      border-radius: 34px;
+      border: 1px solid var(--border-color);
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 2px;
+      background-color: var(--text-secondary);
+      transition: .3s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--accent-color);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(22px);
+      background-color: white;
+    }
+
+    .settings-button {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s ease;
+      margin-right: 10px;
+    }
+
+    .settings-button:hover {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+      height: calc(100% - 36px);
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="console-container animate-logs" id="console-container">
+    <div class="title-bar">
+      <div class="title-text">
+        <div class="title-icon"></div>
+        <span id="title-text">BLFHacks Debug Console</span>
+        <div id="status-indicator" class="status-indicator">
+          <span id="status-text">Idle</span>
+          <div class="loading-dots" id="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      <div class="window-controls">
+        <button class="minimize" onclick="windowControls.minimize()"></button>
+        <button class="maximize" onclick="windowControls.maximize()"></button>
+        <button class="close" onclick="windowControls.close()"></button>
+      </div>
+    </div>
+    
+    <div class="console-wrapper">
+      <div class="console-header">
+        <div class="console-tab active" data-tab="main-log">Main Log</div>
+        <div class="console-tab" data-tab="network">Network</div>
+        <div class="console-tab" data-tab="system">System</div>
+        <div class="console-tab" data-tab="settings">Settings</div>
+      </div>
+      
+      <!-- Tab Content -->
+      <div id="main-log" class="tab-content active">
+        <div class="console" id="console"></div>
+      </div>
+      
+      <div id="network" class="tab-content">
+        <div class="console" id="network-console"></div>
+      </div>
+      
+      <div id="system" class="tab-content">
+        <div class="console" id="system-console"></div>
+      </div>
+      
+      <div id="settings" class="tab-content">
+        <div class="settings-panel" style="display: block;">
+          <div class="settings-section">
+            <div class="settings-title">Interface Settings</div>
+            <div class="settings-description">Customize the appearance and behavior of the Debug Console.</div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <div class="setting-name">Theme</div>
+                <div class="setting-description">Choose between dark and light theme.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="theme-toggle">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <div class="setting-name">Log Animation</div>
+                <div class="setting-description">Enable or disable the fade-in animation for new log entries.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="animation-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="settings-section">
+            <div class="settings-title">Debug Settings</div>
+            <div class="settings-description">Control debug output and behavior.</div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <div class="setting-name">Verbose Logging</div>
+                <div class="setting-description">Show additional debug information in logs.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="verbose-toggle">
+                <span class="slider"></span>
+              </label>
+            </div>
+            
+            <div class="setting-item">
+              <div class="setting-label">
+                <div class="setting-name">Auto Clear Logs</div>
+                <div class="setting-description">Automatically clear logs after reaching 1000 entries.</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="autoclear-toggle" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          
+          <button class="settings-button" id="reset-settings">Reset to Defaults</button>
+          <button class="settings-button" id="save-settings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="console-footer">
+      <div>BLFHacks v1.2.4</div>
+      <div class="footer-stats">
+        <div class="footer-stat">
+          <span>Memory:</span>
+          <span class="footer-stat-value" id="memory-usage">124 MB</span>
+        </div>
+        <div class="footer-stat">
+          <span>Logs:</span>
+          <span class="footer-stat-value" id="log-count">0</span>
+        </div>
+        <div class="footer-stat">
+          <span>Uptime:</span>
+          <span class="footer-stat-value" id="uptime">00:00:00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simulate electron ipcRenderer for preview
+    const { ipcRenderer } = require('electron');
+    
+    // Settings and localStorage management
+    const settings = {
+      theme: 'dark',
+      animateLogEntries: true,
+      verboseLogging: false,
+      autoClearLogs: true
+    };
+    
+    // Load settings from localStorage
+    function loadSettings() {
+      const savedSettings = localStorage.getItem('blfhacks-settings');
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings);
+        Object.assign(settings, parsedSettings);
+        
+        // Apply loaded settings to UI
+        document.getElementById('theme-toggle').checked = settings.theme === 'light';
+        document.getElementById('animation-toggle').checked = settings.animateLogEntries;
+        document.getElementById('verbose-toggle').checked = settings.verboseLogging;
+        document.getElementById('autoclear-toggle').checked = settings.autoClearLogs;
+        
+        // Apply theme immediately
+        if (settings.theme === 'light') {
+          document.getElementById('console-container').classList.add('light-theme');
+        } else {
+          document.getElementById('console-container').classList.remove('light-theme');
+        }
+        
+        // Apply animation setting
+        if (settings.animateLogEntries) {
+          document.getElementById('console-container').classList.add('animate-logs');
+        } else {
+          document.getElementById('console-container').classList.remove('animate-logs');
+        }
+        
+        addSystemMessage("Settings loaded from local storage.");
+      }
+    }
+    
+    // Save settings to localStorage
+    function saveSettings() {
+      localStorage.setItem('blfhacks-settings', JSON.stringify(settings));
+      addSystemMessage("Settings saved to local storage.");
+    }
+    
+    // Variables for console functionality
+    let isDownloadingGameFiles = false;
+    let logCount = 0;
+    let startTime = Date.now();
+    
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+    const loadingDots = document.getElementById('loading-dots');
+    const logCountElement = document.getElementById('log-count');
+    const uptimeElement = document.getElementById('uptime');
+    
+    const windowControls = {
+      minimize: () => ipcRenderer.send('minimize-window'),
+      maximize: () => ipcRenderer.send('maximize-window'),
+      close: () => ipcRenderer.send('close-window')
+    };
+
+    document.querySelectorAll('.console-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        // Remove active class from all tabs
+        document.querySelectorAll('.console-tab').forEach(t => t.classList.remove('active'));
+        // Add active class to the clicked tab
+        tab.classList.add('active');
+        
+        // Get the tab content id from the data-tab attribute
+        const tabContentId = tab.getAttribute('data-tab');
+        
+        // Hide all tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        // Show the corresponding tab content
+        document.getElementById(tabContentId).classList.add('active');
+        
+        // Add system message about tab switch
+        addSystemMessage(`Switched to ${tab.textContent} view.`);
+      });
+    });
+
+    // Format text with highlight for paths and special terms
+    function formatLogText(text) {
+      // Highlight file paths - updated to handle filenames with multiple dots
+      text = text.replace(/([\w.-]+\.(wasm|gz|js|json|bin|dat|txt))\b/g, '<span class="highlight-path">$1</span>');
+      
+      // Highlight numeric values with units (like hashes, sizes)
+      text = text.replace(/(\d+(\.\d+)?\s*(MB|KB|ms|bytes))/g, '<strong>$1</strong>');
+      
+      return text;
+    }
+
+    function addLogEntry(message, level = 'log', color = null) {
+      const titleElement = document.getElementById('title-text');
+      
+      // Update status based on message content
+      if (message.includes("Downloading game files...")) {
+        isDownloadingGameFiles = true;
+        statusText.textContent = "Downloading";
+        statusIndicator.className = "status-indicator active";
+        titleElement.textContent = "BLF Hacks | Downloading Game Files";
+      } else if (message.includes("All files downloaded,")) {
+        isDownloadingGameFiles = false;
+        statusText.textContent = "Complete";
+        setTimeout(() => {
+          statusText.textContent = "Idle";
+          statusIndicator.className = "status-indicator";
+        }, 3000);
+        titleElement.textContent = "BLFHacks Debug Console";
+      } else if (message.includes("Local file hash for game.wasm.gz")) {
+        titleElement.textContent = "BLF Hacks | Calculating File Hashes";
+        statusText.textContent = "Verifying";
+        statusIndicator.className = "status-indicator active";
+      }
+      
+      // Create log element
+      const logElement = document.createElement('p');
+      
+      if (level) {
+        logElement.classList.add(level);
+      }
+      
+      if (color) {
+        logElement.style.color = color;
+      }
+      
+      // Apply formatting
+      logElement.innerHTML = formatLogText(message);
+      
+      // Add timestamp for each log
+      const timestamp = new Date().toLocaleTimeString();
+      const timestampSpan = document.createElement('span');
+      timestampSpan.style.color = 'var(--text-secondary)';
+      timestampSpan.style.marginRight = '8px';
+      timestampSpan.style.fontSize = '0.9em';
+      timestampSpan.textContent = `[${timestamp}]`;
+      
+      logElement.prepend(timestampSpan);
+      
+      // Animate new log entry
+      logElement.style.animationDelay = `${logCount * 0.05}s`;
+      
+      const consoleDiv = document.getElementById('console');
+      consoleDiv.appendChild(logElement);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+      
+      // Update log count
+      logCount++;
+      logCountElement.textContent = logCount;
+      
+      // If this is the very first log entry, add a welcome message
+      if (logCount === 1) {
+        addSystemMessage("BLFHacks Debug Console initialized. Ready for operation.");
+      }
+    }
+    
+    function addSystemMessage(message) {
+      const systemMsg = document.createElement('p');
+      systemMsg.classList.add('info');
+      systemMsg.innerHTML = `<span style="color: var(--text-secondary)">[SYSTEM]</span> ${message}`;
+      
+      const consoleDiv = document.getElementById('console');
+      consoleDiv.appendChild(systemMsg);
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+    
+    ipcRenderer.on('new-log', (event, data) => {
+      addLogEntry(data.message, data.level, data.color || null);
+    });
+    
+    // Update uptime counter
+    setInterval(() => {
+      const elapsedTime = Date.now() - startTime;
+      const hours = Math.floor(elapsedTime / 3600000).toString().padStart(2, '0');
+      const minutes = Math.floor((elapsedTime % 3600000) / 60000).toString().padStart(2, '0');
+      const seconds = Math.floor((elapsedTime % 60000) / 1000).toString().padStart(2, '0');
+      uptimeElement.textContent = `${hours}:${minutes}:${seconds}`;
+      
+      // Mock memory usage changes
+      const memoryUsage = document.getElementById('memory-usage');
+      const currentValue = parseInt(memoryUsage.textContent);
+      const newValue = Math.floor(120 + Math.random() * 10);
+      memoryUsage.textContent = `${newValue} MB`;
+    }, 1000);
+    
+    // Add interactive tabs
+    document.querySelectorAll('.console-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.console-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // If switching to a different tab, show appropriate message
+        if (!tab.classList.contains('active')) {
+          const tabName = tab.textContent;
+          addSystemMessage(`Switched to ${tabName} view.`);
+        }
+      });
+    });
+
+    // Settings toggle event listeners
+    document.getElementById('theme-toggle').addEventListener('change', function() {
+      const container = document.getElementById('console-container');
+      if (this.checked) {
+        container.classList.add('light-theme');
+        settings.theme = 'light';
+      } else {
+        container.classList.remove('light-theme');
+        settings.theme = 'dark';
+      }
+    });
+
+    document.getElementById('animation-toggle').addEventListener('change', function() {
+      const container = document.getElementById('console-container');
+      settings.animateLogEntries = this.checked;
+      
+      if (this.checked) {
+        container.classList.add('animate-logs');
+      } else {
+        container.classList.remove('animate-logs');
+      }
+    });
+
+    document.getElementById('verbose-toggle').addEventListener('change', function() {
+      settings.verboseLogging = this.checked;
+      addSystemMessage(`Verbose logging ${this.checked ? 'enabled' : 'disabled'}.`);
+    });
+
+    document.getElementById('autoclear-toggle').addEventListener('change', function() {
+      settings.autoClearLogs = this.checked;
+      addSystemMessage(`Auto clear logs ${this.checked ? 'enabled' : 'disabled'}.`);
+    });
+
+    // Add event listeners for the settings buttons
+    document.getElementById('save-settings').addEventListener('click', function() {
+      saveSettings();
+      addSystemMessage("Settings saved successfully!");
+    });
+
+    document.getElementById('reset-settings').addEventListener('click', function() {
+      // Reset to default values
+      settings.theme = 'dark';
+      settings.animateLogEntries = true;
+      settings.verboseLogging = false;
+      settings.autoClearLogs = true;
+      
+      // Update UI to reflect default settings
+      document.getElementById('theme-toggle').checked = false;
+      document.getElementById('animation-toggle').checked = true;
+      document.getElementById('verbose-toggle').checked = false;
+      document.getElementById('autoclear-toggle').checked = true;
+      
+      // Apply default settings
+      document.getElementById('console-container').classList.remove('light-theme');
+      document.getElementById('console-container').classList.add('animate-logs');
+      
+      saveSettings();
+      addSystemMessage("Settings reset to defaults.");
+    });
+
+    // Call loadSettings on page load
+    window.addEventListener('DOMContentLoaded', loadSettings);
+  </script>
+</body>
+</html>
